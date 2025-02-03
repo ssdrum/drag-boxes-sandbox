@@ -1,16 +1,15 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { BOX_HEIGHT, BOX_WIDTH } from "./consts";
 
 interface Props {
   id: string;
   top: number;
   left: number;
   bg: string;
-  height: number;
-  width: number;
 }
 
-export default function Box({ id, top, left, height, width, bg }: Props) {
+export default function Box({ id, top, left, bg }: Props) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: id,
   });
@@ -21,8 +20,8 @@ export default function Box({ id, top, left, height, width, bg }: Props) {
     left: left,
     position: "absolute",
     backgroundColor: bg,
-    height: `${height}px`,
-    width: `${width}px`,
+    height: `${BOX_HEIGHT}px`,
+    width: `${BOX_WIDTH}px`,
     borderRadius: "5px",
     cursor: "grab",
   };

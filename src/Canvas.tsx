@@ -1,17 +1,29 @@
 import { DndContext } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import Box from "./Box";
-import { v4 as uuidv4 } from "uuid";
+import { GroupType } from "./types";
 
-export default function Canvas() {
+interface CanvasProps {
+  groups: GroupType[];
+}
+
+export default function Canvas({ groups }: CanvasProps) {
   const style: React.CSSProperties = {
     flexGrow: 1,
+    position: "relative",
   };
 
   return (
     <div style={style}>
       <DndContext modifiers={[restrictToWindowEdges]}>
-        <Box id={uuidv4()} bg="green" height={50} width={150} />
+        {groups.map((group) =>
+          group.children.map((child) => {
+            const { id, coords, bg } = child;
+            return (
+              <Box key={id} id={id} top={coords.y} left={coords.x} bg={bg} />
+            );
+          }),
+        )}
       </DndContext>
     </div>
   );

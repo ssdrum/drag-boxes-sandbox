@@ -8,6 +8,7 @@ import {
   isHeadOfGroup,
   move,
   resetDeltas,
+  resetPreviewFlags,
   splitGroup,
 } from "./utils/dragHandlers";
 import { Dispatch, SetStateAction } from "react";
@@ -41,6 +42,11 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
     setGroups((prevGroups) => move(prevGroups, draggedBoxId, delta));
   };
 
+  const handleDragEnd = (draggedBoxId: string, delta: Coordinates) => {
+    const newGroups = resetPreviewFlags(groups); // Reset all deltas
+    setGroups(newGroups);
+  };
+
   const style: React.CSSProperties = {
     flexGrow: 1,
     position: "relative",
@@ -53,6 +59,9 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
         onDragStart={({ active }) => handleDragStart(active.id as string)}
         onDragMove={({ active, delta }) => {
           handleDragMove(active.id as string, delta);
+        }}
+        onDragEnd={({ active, delta }) => {
+          handleDragEnd(active.id as string, delta);
         }}
       >
         {groups.map((group) =>

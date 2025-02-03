@@ -14,27 +14,31 @@ export function move(
 
   const groupIndex = findGroupIndex(movedGroup, newGroups);
 
-  // Move the group
+  // Move the group first
   newGroups[groupIndex] = moveGroup(movedGroup, delta);
 
-  // Find snap points **before** modifying preview flags
+  // Always reset all preview flags first
+  newGroups = resetPreviewFlags(newGroups);
+
+  // Find snap points after resetting flags
   const closestSnap = findClosestSnapPoints(movedGroup, newGroups);
 
-  // Reset preview flags **only if snap changes**
+  // If no snap or too far, we're already done since we reset flags
   if (!closestSnap || closestSnap.distance >= MIN_SNAP_DIST) {
-    return resetPreviewFlags(newGroups);
+    return newGroups;
   }
 
-  console.log(closestSnap);
-
-  // Apply preview flags **directly inside move()**
+  // Only set preview flag for the closest snap
   const targetIndex = findGroupIndex(closestSnap.targetGroup, newGroups);
-  if (closestSnap.type === "top-to-bottom") {
-    newGroups[targetIndex].children[
-      newGroups[targetIndex].children.length - 1
-    ].showSnapPreviewDown = true;
-  } else {
-    newGroups[targetIndex].children[0].showSnapPreviewUp = true;
+  if (targetIndex !== -1) {
+    // Safety check
+    if (closestSnap.type === "top-to-bottom") {
+      newGroups[targetIndex].children[
+        newGroups[targetIndex].children.length - 1
+      ].showSnapPreviewDown = true;
+    } else {
+      newGroups[targetIndex].children[0].showSnapPreviewUp = true;
+    }
   }
 
   return newGroups;

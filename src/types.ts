@@ -1,12 +1,12 @@
 import { Coordinates } from "@dnd-kit/core/dist/types";
 
-export type GroupType = {
+export type Group = {
   id: string;
-  coords: Coordinates;
-  children: BoxType[];
+  lastDelta?: Coordinates;
+  children: Box[];
 };
 
-export type BoxType = {
+export type Box = {
   id: string;
   coords: Coordinates;
   bg: string;

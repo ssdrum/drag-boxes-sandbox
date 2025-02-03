@@ -15,7 +15,6 @@ export default function Box({ id, top, left, bg }: Props) {
   });
 
   const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
     top: top,
     left: left,
     position: "absolute",

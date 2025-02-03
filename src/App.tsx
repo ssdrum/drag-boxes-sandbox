@@ -1,12 +1,11 @@
 import { useState } from "react";
 import "./App.css";
 import Canvas from "./Canvas";
-import { GroupType } from "./types";
+import { Group as GroupType } from "./types";
 
 const initialGroups: GroupType[] = [
   {
     id: "g-1",
-    coords: { x: 0, y: 0 },
     children: [
       {
         id: "g-1-c-1",
@@ -17,16 +16,15 @@ const initialGroups: GroupType[] = [
   },
   {
     id: "g-2",
-    coords: { x: 150, y: 0 },
     children: [
       {
         id: "g-2-c-1",
-        coords: { x: 150, y: 0 },
+        coords: { x: 300, y: 300 },
         bg: "#FFB6C1",
       },
       {
         id: "g-2-c-2",
-        coords: { x: 150, y: 50 },
+        coords: { x: 300, y: 350 },
         bg: "#FFB6C1",
       },
     ],
@@ -34,8 +32,7 @@ const initialGroups: GroupType[] = [
 ];
 
 export default function App() {
-  // In your component:
-  const [groups, setGroups] = useState<GroupType[]>(initialGroups);
+  const [groups, setGroups] = useState<GroupType[] | null>(initialGroups);
 
   const mainStyle: React.CSSProperties = {
     height: "100vh",
@@ -49,7 +46,7 @@ export default function App() {
 
   return (
     <main style={mainStyle}>
-      <Canvas groups={groups} />
+      <Canvas groups={groups} setGroups={setGroups} />
       <div style={previewStyle}>
         <pre>{JSON.stringify(groups, null, 2)}</pre>
       </div>

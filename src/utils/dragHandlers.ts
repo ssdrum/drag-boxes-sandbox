@@ -1,6 +1,7 @@
 import { Coordinates } from "@dnd-kit/core/dist/types";
 import { Group } from "../types";
 import { v4 as uuidv4 } from "uuid";
+import { BOX_HEIGHT, BOX_WIDTH } from "../consts";
 
 export function move(
   groups: Group[],
@@ -35,6 +36,14 @@ export function moveGroup(group: Group, delta: Coordinates): Group {
 
   const newGroup = {
     ...group,
+    topSnapPoint: {
+      x: group.topSnapPoint.x + incrementalDelta.x,
+      y: group.topSnapPoint.y + incrementalDelta.y,
+    },
+    bottomSnapPoint: {
+      x: group.bottomSnapPoint.x + incrementalDelta.x,
+      y: group.bottomSnapPoint.y + incrementalDelta.y,
+    },
     lastDelta: delta,
     children: group.children.map((child) => {
       return {
@@ -52,16 +61,41 @@ export function moveGroup(group: Group, delta: Coordinates): Group {
 
 // Splits a group into two new groups at the specified box ID. First group contains boxes before split point, second contains split point and remaining boxes.
 export function unSnap(group: Group, newHeadId: string): [Group, Group] {
-  const newHeadIndex = findBoxIndex(newHeadId, group); // find the index in the group's children arary of the new head
+  const newHeadIndex = findBoxIndex(newHeadId, group);
+
+  // Create first group with boxes before split
+  const g1: Group = {
+    id: uuidv4(),
+    children: group.children.slice(0, newHeadIndex),
+    topSnapPoint: { x: 0, y: 0 },
+    bottomSnapPoint: { x: 0, y: 0 },
+  };
+  const [g1TopSnap, g1BottomSnap] = calcGroupSnapPoints(g1);
+  g1.topSnapPoint = g1TopSnap;
+  g1.bottomSnapPoint = g1BottomSnap;
+
+  // Create second group with remaining boxes
+  const g2: Group = {
+    id: uuidv4(),
+    children: group.children.slice(newHeadIndex),
+    topSnapPoint: { x: 0, y: 0 },
+    bottomSnapPoint: { x: 0, y: 0 },
+  };
+  const [g2TopSnap, g2BottomSnap] = calcGroupSnapPoints(g2);
+  g2.topSnapPoint = g2TopSnap;
+  g2.bottomSnapPoint = g2BottomSnap;
+
+  return [g1, g2];
+}
+
+export function calcGroupSnapPoints(group: Group): [Coordinates, Coordinates] {
+  const headCoords = group.children[0].coords;
   return [
+    { x: headCoords.x + BOX_WIDTH / 2, y: headCoords.y }, // Top
     {
-      id: uuidv4(),
-      children: group.children.slice(0, newHeadIndex),
-    },
-    {
-      id: uuidv4(),
-      children: group.children.slice(newHeadIndex),
-    },
+      x: headCoords.x + BOX_WIDTH / 2,
+      y: headCoords.y + BOX_HEIGHT * group.children.length,
+    }, // Bottom
   ];
 }
 

@@ -1,4 +1,5 @@
 import { expect, test, describe } from "bun:test";
+import { Coordinates } from "@dnd-kit/core/dist/types";
 import {
   findBoxIndex,
   findGroupIndex,
@@ -10,289 +11,132 @@ import {
 } from "../utils/dragHandlers";
 import { Box, Group } from "../types";
 
-describe("getParentGroupId", () => {
-  // Set up test data
+// Test utilities
+const createBox = (id: string, coords: Coordinates = { x: 0, y: 0 }): Box => ({
+  id,
+  coords,
+  bg: "#FFB6C1",
+  showSnapPreviewUp: false,
+  showSnapPreviewDown: false,
+});
+
+const createGroup = (id: string, children: Box[] = []): Group => ({
+  id,
+  children,
+  topSnapPoint: { x: 0, y: 0 },
+  bottomSnapPoint: { x: 0, y: 0 },
+});
+
+describe("getParentGroup", () => {
+  const box1 = createBox("box-1");
+  const box2 = createBox("box-2", { x: 100, y: 0 });
+  const box3 = createBox("box-3", { x: 100, y: 50 });
+
   const testGroups: Group[] = [
-    {
-      id: "group-1",
-      children: [
-        {
-          id: "box-1",
-          coords: { x: 0, y: 0 },
-          bg: "#FFB6C1",
-        },
-      ],
-    },
-    {
-      id: "group-2",
-      children: [
-        {
-          id: "box-2",
-          coords: { x: 100, y: 0 },
-          bg: "#FFB6C1",
-        },
-        {
-          id: "box-3",
-          coords: { x: 100, y: 50 },
-          bg: "#4A90E2",
-        },
-      ],
-    },
+    createGroup("group-1", [box1]),
+    createGroup("group-2", [box2, box3]),
   ];
 
-  test("should return null when groups array is null", () => {
+  test("should return null for empty groups array", () => {
     expect(getParentGroup("box-1", [])).toBe(null);
   });
 
-  test("should return null when groups array is empty", () => {
-    expect(getParentGroup("box-1", [])).toBe(null);
-  });
-
-  test("should return null when box is not found in any group", () => {
+  test("should return null for non-existent box", () => {
     expect(getParentGroup("non-existent-box", testGroups)).toBe(null);
   });
 
-  test("should find group containing single box", () => {
-    expect(getParentGroup("box-1", testGroups)).toBe(testGroups[0]); // Group 1
-  });
-
-  test("should find group containing box in multi-box group", () => {
-    expect(getParentGroup("box-2", testGroups)).toBe(testGroups[1]); // Group 2
-    expect(getParentGroup("box-3", testGroups)).toBe(testGroups[1]); // Group 2
+  test("should find group containing box", () => {
+    expect(getParentGroup("box-1", testGroups)).toBe(testGroups[0]);
+    expect(getParentGroup("box-2", testGroups)).toBe(testGroups[1]);
+    expect(getParentGroup("box-3", testGroups)).toBe(testGroups[1]);
   });
 });
 
 describe("isHeadOfGroup", () => {
-  const box2: Box = {
-    id: "box-2",
-    coords: { x: 0, y: 0 },
-    bg: "#FFB6C1",
-  };
+  const box = createBox("box-2");
+  const group = createGroup("group-1", [box]);
+  const emptyGroup = createGroup("empty-group");
 
-  const emptyGroup: Group = {
-    id: "group-1",
-    children: [],
-  };
-
-  const group1: Group = {
-    id: "group-1",
-    children: [box2],
-  };
-
-  test("should return false if group is empty", () => {
+  test("should handle empty groups and non-head boxes", () => {
     expect(isHeadOfGroup("box-1", emptyGroup)).toBe(false);
+    expect(isHeadOfGroup("box-1", group)).toBe(false);
   });
 
-  test("should return false if box is not the head of the group", () => {
-    expect(isHeadOfGroup("box-1", group1)).toBe(false);
-  });
-
-  test("should return true if box is the head of the group", () => {
-    expect(isHeadOfGroup("box-2", group1)).toBe(true);
+  test("should identify head of group", () => {
+    expect(isHeadOfGroup("box-2", group)).toBe(true);
   });
 });
 
 describe("findGroupIndex", () => {
-  const group0 = {
-    id: "group-0",
-    coords: { x: 0, y: 0 },
-    children: [
-      {
-        id: "box-1",
-        coords: { x: 0, y: 0 },
-        bg: "#FFB6C1",
-      },
-    ],
-  };
+  const box = createBox("box-1");
+  const group1 = createGroup("group-1", [box]);
+  const group2 = createGroup("group-2", [box]);
+  const testGroups = [group1, group2];
 
-  const group1 = {
-    id: "group-1",
-    coords: { x: 0, y: 0 },
-    children: [
-      {
-        id: "box-1",
-        coords: { x: 0, y: 0 },
-        bg: "#FFB6C1",
-      },
-    ],
-  };
-
-  const group2 = {
-    id: "group-2",
-    coords: { x: 0, y: 0 },
-    children: [
-      {
-        id: "box-1",
-        coords: { x: 0, y: 0 },
-        bg: "#FFB6C1",
-      },
-    ],
-  };
-
-  const testGroups: Group[] = [
-    {
-      id: "group-1",
-      children: [
-        {
-          id: "box-1",
-          coords: { x: 0, y: 0 },
-          bg: "#FFB6C1",
-        },
-      ],
-    },
-    {
-      id: "group-2",
-      children: [
-        {
-          id: "box-2",
-          coords: { x: 100, y: 0 },
-          bg: "#FFB6C1",
-        },
-        {
-          id: "box-3",
-          coords: { x: 100, y: 50 },
-          bg: "#4A90E2",
-        },
-      ],
-    },
-  ];
-
-  test("should return -1 if group is not in groups array", () => {
-    expect(findGroupIndex(group0, testGroups)).toBe(-1);
-  });
-
-  test("should return 0 if group is the first group in the groups array", () => {
+  test("should find group positions", () => {
+    expect(findGroupIndex(createGroup("non-existent"), testGroups)).toBe(-1);
     expect(findGroupIndex(group1, testGroups)).toBe(0);
-  });
-
-  test("should return 1 if group is the second group in the groups array", () => {
     expect(findGroupIndex(group2, testGroups)).toBe(1);
   });
 });
 
 describe("resetDeltas", () => {
-  test("resets lastDelta to undefined for all groups", () => {
-    const groups = [
-      {
-        id: "1",
-        children: [],
-        coords: { x: 0, y: 0 },
-        lastDelta: { x: 10, y: 20 },
-      },
-      {
-        id: "2",
-        children: [],
-        coords: { x: 100, y: 100 },
-        lastDelta: { x: -5, y: 15 },
-      },
+  test("should reset lastDelta in all groups", () => {
+    const groups: Group[] = [
+      { ...createGroup("1"), lastDelta: { x: 10, y: 20 } },
+      { ...createGroup("2"), lastDelta: { x: -5, y: 15 } },
     ];
 
     const result = resetDeltas(groups);
-
     expect(result).toHaveLength(2);
-    expect(result![0].lastDelta).toBeUndefined();
-    expect(result![1].lastDelta).toBeUndefined();
+    expect(result[0].lastDelta).toBeUndefined();
+    expect(result[1].lastDelta).toBeUndefined();
   });
 });
 
 describe("findBoxIndex", () => {
-  const testGroup: Group = {
-    id: "g-1",
-    children: [
-      {
-        id: "b-1",
-        coords: { x: 0, y: 0 },
-        bg: "",
-      },
-      {
-        id: "b-2",
-        coords: { x: 0, y: 0 },
-        bg: "",
-      },
-      {
-        id: "b-3",
-        coords: { x: 0, y: 0 },
-        bg: "",
-      },
-    ],
-  };
+  const boxes = [createBox("b-1"), createBox("b-2"), createBox("b-3")];
+  const group = createGroup("g-1", boxes);
 
-  test("should return 0", () => {
-    expect(findBoxIndex("b-1", testGroup)).toBe(0);
-  });
-
-  test("should return 1", () => {
-    expect(findBoxIndex("b-2", testGroup)).toBe(1);
-  });
-
-  test("should return -1", () => {
-    expect(findBoxIndex("", testGroup)).toBe(-1);
+  test("should find correct box indices", () => {
+    expect(findBoxIndex("b-1", group)).toBe(0);
+    expect(findBoxIndex("b-2", group)).toBe(1);
+    expect(findBoxIndex("b-3", group)).toBe(2);
+    expect(findBoxIndex("non-existent", group)).toBe(-1);
   });
 });
 
 describe("unSnap", () => {
-  const testGroup: Group = {
-    id: "g-1",
-    children: [
-      {
-        id: "b-1",
-        coords: { x: 0, y: 0 },
-        bg: "",
-      },
-      {
-        id: "b-2",
-        coords: { x: 0, y: 0 },
-        bg: "",
-      },
-      {
-        id: "b-3",
-        coords: { x: 0, y: 0 },
-        bg: "",
-      },
-    ],
-  };
+  const boxes = [createBox("b-1"), createBox("b-2"), createBox("b-3")];
+  const group = createGroup("g-1", boxes);
 
-  test("should split from second block", () => {
-    const [g1, g2] = unSnap(testGroup, "b-2");
-    expect(g1).toMatchObject({
-      children: [{ id: "b-1" }],
-    });
-    expect(g2).toMatchObject({
-      children: [{ id: "b-2" }, { id: "b-3" }],
-    });
-  });
+  test("should split group at specified box", () => {
+    const [g1, g2] = unSnap(group, "b-2");
+    expect(g1.children.map((b) => b.id)).toEqual(["b-1"]);
+    expect(g2.children.map((b) => b.id)).toEqual(["b-2", "b-3"]);
 
-  test("should split from last block", () => {
-    const [g1, g2] = unSnap(testGroup, "b-3");
-    expect(g1).toMatchObject({
-      children: [{ id: "b-1" }, { id: "b-2" }],
-    });
-    expect(g2).toMatchObject({
-      children: [{ id: "b-3" }],
-    });
+    const [g3, g4] = unSnap(group, "b-3");
+    expect(g3.children.map((b) => b.id)).toEqual(["b-1", "b-2"]);
+    expect(g4.children.map((b) => b.id)).toEqual(["b-3"]);
   });
 });
 
 describe("removeGroup", () => {
-  const group1 = { id: "g1", children: [] };
-  const group2 = { id: "g2", children: [] };
-  const group3 = { id: "g3", children: [] };
-  const allGroups = [group1, group2, group3];
+  const groups = [createGroup("g1"), createGroup("g2"), createGroup("g3")];
 
-  test("removes first element", () => {
-    expect(removeGroup(group1, allGroups)).toEqual([group2, group3]);
-  });
-
-  test("removes middle element", () => {
-    expect(removeGroup(group2, allGroups)).toEqual([group1, group3]);
-  });
-
-  test("removes last element", () => {
-    expect(removeGroup(group3, allGroups)).toEqual([group1, group2]);
-  });
-
-  test("returns same array if group not found", () => {
-    const nonExistent = { id: "g4", children: [] };
-    expect(removeGroup(nonExistent, allGroups)).toEqual(allGroups);
+  test("should remove groups correctly", () => {
+    expect(removeGroup(groups[0], groups).map((g) => g.id)).toEqual([
+      "g2",
+      "g3",
+    ]);
+    expect(removeGroup(groups[1], groups).map((g) => g.id)).toEqual([
+      "g1",
+      "g3",
+    ]);
+    expect(removeGroup(groups[2], groups).map((g) => g.id)).toEqual([
+      "g1",
+      "g2",
+    ]);
+    expect(removeGroup(createGroup("non-existent"), groups)).toEqual(groups);
   });
 });

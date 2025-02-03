@@ -20,12 +20,17 @@ const initialGroups: GroupType[] = [
       {
         id: "g-2-c-1",
         coords: { x: 300, y: 300 },
-        bg: "#FFB6C1",
+        bg: "#90EE90",
       },
       {
         id: "g-2-c-2",
         coords: { x: 300, y: 350 },
-        bg: "#FFB6C1",
+        bg: "#FFD700",
+      },
+      {
+        id: "g-2-c-3",
+        coords: { x: 300, y: 400 },
+        bg: "#FF4040",
       },
     ],
   },

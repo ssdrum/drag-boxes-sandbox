@@ -12,4 +12,6 @@ export type Box = {
   id: string;
   coords: Coordinates;
   bg: string;
+  showSnapPreviewUp: boolean;
+  showSnapPreviewDown: boolean;
 };

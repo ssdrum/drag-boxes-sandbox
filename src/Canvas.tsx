@@ -57,9 +57,18 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
       >
         {groups.map((group) =>
           group.children.map((child) => {
-            const { id, coords, bg } = child;
+            const { id, coords, bg, showSnapPreviewUp, showSnapPreviewDown } =
+              child;
             return (
-              <Box key={id} id={id} top={coords.y} left={coords.x} bg={bg} />
+              <Box
+                key={id}
+                id={id}
+                top={coords.y}
+                left={coords.x}
+                bg={bg}
+                showSnapPreviewUp={showSnapPreviewUp}
+                showSnapPreviewDown={showSnapPreviewDown}
+              />
             );
           }),
         )}

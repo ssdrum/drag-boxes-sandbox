@@ -1,5 +1,4 @@
 import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { BOX_HEIGHT, BOX_WIDTH } from "./consts";
 
 interface Props {
@@ -7,10 +6,19 @@ interface Props {
   top: number;
   left: number;
   bg: string;
+  showSnapPreviewUp: boolean;
+  showSnapPreviewDown: boolean;
 }
 
-export default function Box({ id, top, left, bg }: Props) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+export default function Box({
+  id,
+  top,
+  left,
+  bg,
+  showSnapPreviewUp,
+  showSnapPreviewDown,
+}: Props) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
     id: id,
   });
 
@@ -26,12 +34,40 @@ export default function Box({ id, top, left, bg }: Props) {
   };
 
   return (
-    <div
-      key={id}
-      style={style}
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-    ></div>
+    <>
+      {showSnapPreviewUp && (
+        <div
+          style={{
+            position: "absolute",
+            top: top - BOX_HEIGHT,
+            left: left,
+            height: `${BOX_HEIGHT}px`,
+            width: `${BOX_WIDTH}px`,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            borderRadius: "5px",
+          }}
+        />
+      )}
+      <div
+        key={id}
+        style={style}
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+      />
+      {showSnapPreviewDown && (
+        <div
+          style={{
+            position: "absolute",
+            top: top + BOX_HEIGHT,
+            left: left,
+            height: `${BOX_HEIGHT}px`,
+            width: `${BOX_WIDTH}px`,
+            backgroundColor: "rgba(0,0,0,0.2)",
+            borderRadius: "5px",
+          }}
+        />
+      )}
+    </>
   );
 }

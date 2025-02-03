@@ -45,7 +45,7 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
     setGroups((prevGroups) => move(prevGroups, draggedBoxId, delta));
   };
 
-  const handleDragEnd = (draggedBoxId: string, delta: Coordinates) => {
+  const handleDragEnd = (draggedBoxId: string) => {
     const newGroups = resetPreviewFlags(groups); // Reset all deltas
 
     const movedGroup = getParentGroup(draggedBoxId, newGroups);
@@ -75,8 +75,8 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
         onDragMove={({ active, delta }) => {
           handleDragMove(active.id as string, delta);
         }}
-        onDragEnd={({ active, delta }) => {
-          handleDragEnd(active.id as string, delta);
+        onDragEnd={({ active }) => {
+          handleDragEnd(active.id as string);
         }}
       >
         {groups.map((group) =>

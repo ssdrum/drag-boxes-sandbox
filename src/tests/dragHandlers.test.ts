@@ -1,9 +1,12 @@
 import { expect, test, describe } from "bun:test";
 import {
+  findBoxIndex,
   findGroupIndex,
   getParentGroup,
   isHeadOfGroup,
+  removeGroup,
   resetDeltas,
+  unSnap,
 } from "../utils/dragHandlers";
 import { Box, Group } from "../types";
 
@@ -189,5 +192,107 @@ describe("resetDeltas", () => {
     expect(result).toHaveLength(2);
     expect(result![0].lastDelta).toBeUndefined();
     expect(result![1].lastDelta).toBeUndefined();
+  });
+});
+
+describe("findBoxIndex", () => {
+  const testGroup: Group = {
+    id: "g-1",
+    children: [
+      {
+        id: "b-1",
+        coords: { x: 0, y: 0 },
+        bg: "",
+      },
+      {
+        id: "b-2",
+        coords: { x: 0, y: 0 },
+        bg: "",
+      },
+      {
+        id: "b-3",
+        coords: { x: 0, y: 0 },
+        bg: "",
+      },
+    ],
+  };
+
+  test("should return 0", () => {
+    expect(findBoxIndex("b-1", testGroup)).toBe(0);
+  });
+
+  test("should return 1", () => {
+    expect(findBoxIndex("b-2", testGroup)).toBe(1);
+  });
+
+  test("should return -1", () => {
+    expect(findBoxIndex("", testGroup)).toBe(-1);
+  });
+});
+
+describe("unSnap", () => {
+  const testGroup: Group = {
+    id: "g-1",
+    children: [
+      {
+        id: "b-1",
+        coords: { x: 0, y: 0 },
+        bg: "",
+      },
+      {
+        id: "b-2",
+        coords: { x: 0, y: 0 },
+        bg: "",
+      },
+      {
+        id: "b-3",
+        coords: { x: 0, y: 0 },
+        bg: "",
+      },
+    ],
+  };
+
+  test("should split from second block", () => {
+    const [g1, g2] = unSnap(testGroup, "b-2");
+    expect(g1).toMatchObject({
+      children: [{ id: "b-1" }],
+    });
+    expect(g2).toMatchObject({
+      children: [{ id: "b-2" }, { id: "b-3" }],
+    });
+  });
+
+  test("should split from last block", () => {
+    const [g1, g2] = unSnap(testGroup, "b-3");
+    expect(g1).toMatchObject({
+      children: [{ id: "b-1" }, { id: "b-2" }],
+    });
+    expect(g2).toMatchObject({
+      children: [{ id: "b-3" }],
+    });
+  });
+});
+
+describe("removeGroup", () => {
+  const group1 = { id: "g1", children: [] };
+  const group2 = { id: "g2", children: [] };
+  const group3 = { id: "g3", children: [] };
+  const allGroups = [group1, group2, group3];
+
+  test("removes first element", () => {
+    expect(removeGroup(group1, allGroups)).toEqual([group2, group3]);
+  });
+
+  test("removes middle element", () => {
+    expect(removeGroup(group2, allGroups)).toEqual([group1, group3]);
+  });
+
+  test("removes last element", () => {
+    expect(removeGroup(group3, allGroups)).toEqual([group1, group2]);
+  });
+
+  test("returns same array if group not found", () => {
+    const nonExistent = { id: "g4", children: [] };
+    expect(removeGroup(nonExistent, allGroups)).toEqual(allGroups);
   });
 });

@@ -1,5 +1,6 @@
 import { Coordinates } from "@dnd-kit/core/dist/types";
 import { Group } from "../types";
+import { v4 as uuidv4 } from "uuid";
 
 export function move(
   groups: Group[],
@@ -25,7 +26,7 @@ export function move(
 }
 
 // WARNING: Untested
-// Moves the whole group
+// Moves a group
 export function moveGroup(group: Group, delta: Coordinates): Group {
   const incrementalDelta = {
     x: delta.x - (group.lastDelta?.x ?? 0),
@@ -47,6 +48,38 @@ export function moveGroup(group: Group, delta: Coordinates): Group {
   };
 
   return newGroup;
+}
+
+// Splits a group into two new groups at the specified box ID. First group contains boxes before split point, second contains split point and remaining boxes.
+export function unSnap(group: Group, newHeadId: string): [Group, Group] {
+  const newHeadIndex = findBoxIndex(newHeadId, group); // find the index in the group's children arary of the new head
+  return [
+    {
+      id: uuidv4(),
+      children: group.children.slice(0, newHeadIndex),
+    },
+    {
+      id: uuidv4(),
+      children: group.children.slice(newHeadIndex),
+    },
+  ];
+}
+
+// Removes a group from an array of groups
+export function removeGroup(group: Group, groups: Group[]): Group[] {
+  return groups.filter((elem) => elem.id !== group.id);
+}
+
+// Removes original group from groups array and replaces it with two new groups created by splitting at draggedBoxId
+export function splitGroup(
+  movedGroup: Group,
+  draggedBoxId: string,
+  groups: Group[],
+): Group[] {
+  const newGroups = removeGroup(movedGroup, groups);
+  const [g1, g2] = unSnap(movedGroup, draggedBoxId);
+  newGroups.push(g1, g2);
+  return newGroups;
 }
 
 // Returns the group id of the box with id == boxId
@@ -82,4 +115,9 @@ export function resetDeltas(groups: Group[]): Group[] {
     ...group,
     lastDelta: undefined,
   }));
+}
+
+// Returns the position of a box within the group's children
+export function findBoxIndex(boxId: string, group: Group): number {
+  return group.children.findIndex((elem) => elem.id === boxId);
 }

@@ -4,14 +4,17 @@ import Box from "./Box";
 import { Group as GroupType } from "./types";
 import { Coordinates } from "@dnd-kit/core/dist/types";
 import {
+  findClosestSnapPoints,
   getParentGroup,
   isHeadOfGroup,
   move,
   resetDeltas,
   resetPreviewFlags,
+  snap,
   splitGroup,
 } from "./utils/dragHandlers";
 import { Dispatch, SetStateAction } from "react";
+import { MIN_SNAP_DIST } from "./consts";
 
 interface CanvasProps {
   groups: GroupType[];
@@ -44,7 +47,19 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
 
   const handleDragEnd = (draggedBoxId: string, delta: Coordinates) => {
     const newGroups = resetPreviewFlags(groups); // Reset all deltas
-    setGroups(newGroups);
+
+    const movedGroup = getParentGroup(draggedBoxId, newGroups);
+    if (!movedGroup) {
+      return;
+    }
+
+    const closestSnap = findClosestSnapPoints(movedGroup, newGroups);
+    // If no snap or too far, we're already done since we reset flags
+    if (!closestSnap || closestSnap.distance >= MIN_SNAP_DIST) {
+      return;
+    }
+
+    setGroups(snap(closestSnap, groups));
   };
 
   const style: React.CSSProperties = {

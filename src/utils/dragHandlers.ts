@@ -44,6 +44,110 @@ export function move(
   return newGroups;
 }
 
+export function snap(snapResult: SnapResult, groups: Group[]): Group[] {
+  const newGroups = groups.filter(
+    // Remove original groups
+    (group) =>
+      group.id !== snapResult.targetGroup.id &&
+      group.id !== snapResult.sourceGroup.id,
+  );
+
+  let mergedGroup: Group;
+  if (snapResult.type === "top-to-bottom") {
+    const lastTargetChild =
+      snapResult.targetGroup.children[
+        snapResult.targetGroup.children.length - 1
+      ];
+    const firstSourceChild = snapResult.sourceGroup.children[0];
+    const yOffset =
+      lastTargetChild.coords.y + BOX_HEIGHT - firstSourceChild.coords.y;
+
+    const adjustedSourceChildren = snapResult.sourceGroup.children.map(
+      (child) => ({
+        ...child,
+        coords: {
+          x: child.coords.x,
+          y: child.coords.y + yOffset,
+        },
+      }),
+    );
+
+    const allChildren = [
+      ...snapResult.targetGroup.children,
+      ...adjustedSourceChildren,
+    ];
+    mergedGroup = {
+      ...snapResult.targetGroup,
+      children: allChildren,
+      // Update both snap points
+      topSnapPoint: {
+        x: snapResult.targetGroup.children[0].coords.x + BOX_WIDTH / 2,
+        y: snapResult.targetGroup.children[0].coords.y,
+      },
+      bottomSnapPoint: {
+        x: snapResult.targetGroup.children[0].coords.x + BOX_WIDTH / 2,
+        y: allChildren[allChildren.length - 1].coords.y + BOX_HEIGHT,
+      },
+    };
+  } else {
+    // Calculate the offset for the source group's children
+    const firstTargetChild = snapResult.targetGroup.children[0];
+    const lastSourceChild =
+      snapResult.sourceGroup.children[
+        snapResult.sourceGroup.children.length - 1
+      ];
+    const yOffset =
+      firstTargetChild.coords.y - (lastSourceChild.coords.y + BOX_HEIGHT);
+
+    // Adjust source children coordinates
+    const adjustedSourceChildren = snapResult.sourceGroup.children.map(
+      (child) => ({
+        ...child,
+        coords: {
+          x: child.coords.x,
+          y: child.coords.y + yOffset,
+        },
+      }),
+    );
+
+    const allChildren = [
+      ...adjustedSourceChildren,
+      ...snapResult.targetGroup.children,
+    ];
+
+    mergedGroup = {
+      ...snapResult.targetGroup,
+      children: allChildren,
+      // Update both snap points
+      topSnapPoint: {
+        x: snapResult.targetGroup.topSnapPoint.x,
+        y:
+          snapResult.targetGroup.topSnapPoint.y +
+          snapResult.sourceGroup.children.length * BOX_HEIGHT,
+      },
+      bottomSnapPoint: { ...snapResult.targetGroup.bottomSnapPoint },
+    };
+  }
+
+  // Ensure x coordinates align
+  mergedGroup.children = mergedGroup.children.map((child) => ({
+    ...child,
+    coords: {
+      ...child.coords,
+      x: snapResult.targetGroup.children[0].coords.x,
+    },
+  }));
+
+  // Reset lastDelta since this is a new merged group
+  mergedGroup = {
+    ...mergedGroup,
+    lastDelta: undefined,
+  };
+
+  newGroups.push(mergedGroup);
+  return newGroups;
+}
+
 export function resetPreviewFlags(groups: Group[]): Group[] {
   return groups.map((group) => ({
     ...group,
@@ -55,7 +159,7 @@ export function resetPreviewFlags(groups: Group[]): Group[] {
   }));
 }
 
-type SnapDistance = {
+type SnapResult = {
   distance: number;
   type: "top-to-bottom" | "bottom-to-top";
   sourceGroup: Group;
@@ -65,9 +169,9 @@ type SnapDistance = {
 export function findClosestSnapPoints(
   draggedGroup: Group,
   allGroups: Group[],
-): SnapDistance | null {
+): SnapResult | null {
   let closestDistance = Infinity;
-  let closestSnap: SnapDistance | null = null;
+  let closestSnap: SnapResult | null = null;
 
   // Skip creating array copy by using direct iteration
   for (let i = 0; i < allGroups.length; i++) {

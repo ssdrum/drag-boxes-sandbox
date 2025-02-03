@@ -31,6 +31,7 @@ export default function Box({
     width: `${BOX_WIDTH}px`,
     borderRadius: "5px",
     cursor: "grab",
+    touchAction: "none",
   };
 
   return (

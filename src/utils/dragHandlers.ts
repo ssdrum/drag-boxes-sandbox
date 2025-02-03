@@ -1,29 +1,109 @@
 import { Coordinates } from "@dnd-kit/core/dist/types";
 import { Group } from "../types";
 import { v4 as uuidv4 } from "uuid";
-import { BOX_HEIGHT, BOX_WIDTH } from "../consts";
+import { BOX_HEIGHT, BOX_WIDTH, MIN_SNAP_DIST } from "../consts";
 
 export function move(
   groups: Group[],
   boxId: string,
   delta: Coordinates,
 ): Group[] {
-  const newGroups = [...groups];
-
+  let newGroups = [...groups];
   const movedGroup = getParentGroup(boxId, newGroups);
-  if (movedGroup === null) {
-    console.error("Error in move(): no group found\n");
-    return newGroups;
+  if (!movedGroup) return newGroups;
+
+  const groupIndex = findGroupIndex(movedGroup, newGroups);
+
+  // Move the group
+  newGroups[groupIndex] = moveGroup(movedGroup, delta);
+
+  // Find snap points **before** modifying preview flags
+  const closestSnap = findClosestSnapPoints(movedGroup, newGroups);
+
+  // Reset preview flags **only if snap changes**
+  if (!closestSnap || closestSnap.distance >= MIN_SNAP_DIST) {
+    return resetPreviewFlags(newGroups);
   }
 
-  // If moving the head of a group, move the whole group with it
-  if (isHeadOfGroup(boxId, movedGroup)) {
-    const groupIndex = findGroupIndex(movedGroup, newGroups);
-    newGroups[groupIndex] = moveGroup(movedGroup, delta);
-    return newGroups;
+  console.log(closestSnap);
+
+  // Apply preview flags **directly inside move()**
+  const targetIndex = findGroupIndex(closestSnap.targetGroup, newGroups);
+  if (closestSnap.type === "top-to-bottom") {
+    newGroups[targetIndex].children[
+      newGroups[targetIndex].children.length - 1
+    ].showSnapPreviewDown = true;
+  } else {
+    newGroups[targetIndex].children[0].showSnapPreviewUp = true;
   }
 
   return newGroups;
+}
+
+export function resetPreviewFlags(groups: Group[]): Group[] {
+  return groups.map((group) => ({
+    ...group,
+    children: group.children.map((child) => ({
+      ...child,
+      showSnapPreviewUp: false,
+      showSnapPreviewDown: false,
+    })),
+  }));
+}
+
+type SnapDistance = {
+  distance: number;
+  type: "top-to-bottom" | "bottom-to-top";
+  sourceGroup: Group;
+  targetGroup: Group;
+};
+
+export function findClosestSnapPoints(
+  draggedGroup: Group,
+  allGroups: Group[],
+): SnapDistance | null {
+  let closestDistance = Infinity;
+  let closestSnap: SnapDistance | null = null;
+
+  // Skip creating array copy by using direct iteration
+  for (let i = 0; i < allGroups.length; i++) {
+    const targetGroup = allGroups[i];
+    if (targetGroup.id === draggedGroup.id) continue;
+
+    // Calculate top-to-bottom distance
+    const topToBottomDistance = Math.hypot(
+      draggedGroup.topSnapPoint.x - targetGroup.bottomSnapPoint.x,
+      draggedGroup.topSnapPoint.y - targetGroup.bottomSnapPoint.y,
+    );
+
+    if (topToBottomDistance < closestDistance) {
+      closestDistance = topToBottomDistance;
+      closestSnap = {
+        distance: topToBottomDistance,
+        type: "top-to-bottom",
+        sourceGroup: draggedGroup,
+        targetGroup,
+      };
+    }
+
+    // Calculate bottom-to-top distance
+    const bottomToTopDistance = Math.hypot(
+      draggedGroup.bottomSnapPoint.x - targetGroup.topSnapPoint.x,
+      draggedGroup.bottomSnapPoint.y - targetGroup.topSnapPoint.y,
+    );
+
+    if (bottomToTopDistance < closestDistance) {
+      closestDistance = bottomToTopDistance;
+      closestSnap = {
+        distance: bottomToTopDistance,
+        type: "bottom-to-top",
+        sourceGroup: draggedGroup,
+        targetGroup,
+      };
+    }
+  }
+
+  return closestSnap;
 }
 
 // WARNING: Untested
@@ -154,4 +234,9 @@ export function resetDeltas(groups: Group[]): Group[] {
 // Returns the position of a box within the group's children
 export function findBoxIndex(boxId: string, group: Group): number {
   return group.children.findIndex((elem) => elem.id === boxId);
+}
+
+// Calculates the distance between two points
+export function calcDistance(p1: Coordinates, p2: Coordinates): number {
+  return Math.hypot(p1.x - p2.x, p1.y - p2.y);
 }

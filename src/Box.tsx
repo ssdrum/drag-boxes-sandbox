@@ -35,19 +35,21 @@ export default function Box({
 
   return (
     <>
-      {showSnapPreviewUp && (
-        <div
-          style={{
-            position: "absolute",
-            top: top - BOX_HEIGHT,
-            left: left,
-            height: `${BOX_HEIGHT}px`,
-            width: `${BOX_WIDTH}px`,
-            backgroundColor: "rgba(0,0,0,0.2)",
-            borderRadius: "5px",
-          }}
-        />
-      )}
+      {/* Always render preview elements but control visibility with opacity */}
+      <div
+        style={{
+          position: "absolute",
+          top: top - BOX_HEIGHT,
+          left: left,
+          height: `${BOX_HEIGHT}px`,
+          width: `${BOX_WIDTH}px`,
+          backgroundColor: "rgba(0,0,0,0.2)",
+          borderRadius: "5px",
+          opacity: showSnapPreviewUp ? 1 : 0,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      />
       <div
         key={id}
         style={style}
@@ -55,19 +57,20 @@ export default function Box({
         {...listeners}
         {...attributes}
       />
-      {showSnapPreviewDown && (
-        <div
-          style={{
-            position: "absolute",
-            top: top + BOX_HEIGHT,
-            left: left,
-            height: `${BOX_HEIGHT}px`,
-            width: `${BOX_WIDTH}px`,
-            backgroundColor: "rgba(0,0,0,0.2)",
-            borderRadius: "5px",
-          }}
-        />
-      )}
+      <div
+        style={{
+          position: "absolute",
+          top: top + BOX_HEIGHT,
+          left: left,
+          height: `${BOX_HEIGHT}px`,
+          width: `${BOX_WIDTH}px`,
+          backgroundColor: "rgba(0,0,0,0.2)",
+          borderRadius: "5px",
+          opacity: showSnapPreviewDown ? 1 : 0,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      />
     </>
   );
 }

@@ -38,7 +38,7 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
   };
 
   const handleDragMove = (draggedBoxId: string, delta: Coordinates) => {
-    setGroups(move(groups, draggedBoxId, delta));
+    setGroups((prevGroups) => move(prevGroups, draggedBoxId, delta));
   };
 
   const style: React.CSSProperties = {

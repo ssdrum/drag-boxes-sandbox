@@ -7,8 +7,8 @@ import { move, resetDeltas } from "./utils/dragHandlers";
 import { Dispatch, SetStateAction } from "react";
 
 interface CanvasProps {
-  groups: GroupType[] | null;
-  setGroups: Dispatch<SetStateAction<GroupType[] | null>>;
+  groups: GroupType[];
+  setGroups: Dispatch<SetStateAction<GroupType[]>>;
 }
 
 export default function Canvas({ groups, setGroups }: CanvasProps) {
@@ -24,10 +24,6 @@ export default function Canvas({ groups, setGroups }: CanvasProps) {
   const handleDragMove = (active: string, delta: Coordinates) => {
     setGroups(move(groups, active, delta));
   };
-
-  if (groups === null) {
-    return "Grups is null. Check errors in console";
-  }
 
   return (
     <div style={style}>

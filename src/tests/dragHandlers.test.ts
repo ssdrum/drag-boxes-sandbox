@@ -168,10 +168,6 @@ describe("findGroupIndex", () => {
 });
 
 describe("resetDeltas", () => {
-  test("returns null when input is null", () => {
-    expect(resetDeltas(null)).toBeNull();
-  });
-
   test("resets lastDelta to undefined for all groups", () => {
     const groups = [
       {

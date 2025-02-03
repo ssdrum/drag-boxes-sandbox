@@ -2,15 +2,10 @@ import { Coordinates } from "@dnd-kit/core/dist/types";
 import { Group } from "../types";
 
 export function move(
-  groups: Group[] | null,
+  groups: Group[],
   boxId: string,
   delta: Coordinates,
-): Group[] | null {
-  if (groups === null) {
-    console.error("Error in move(): groups is null\n");
-    return null;
-  }
-
+): Group[] {
   const newGroups = [...groups];
 
   const movedGroup = getParentGroup(boxId, newGroups);
@@ -82,11 +77,7 @@ export function findGroupIndex(group: Group, groups: Group[]): number {
 }
 
 // Resets deltas of all groups
-export function resetDeltas(groups: Group[] | null): Group[] | null {
-  if (groups === null) {
-    return null;
-  }
-
+export function resetDeltas(groups: Group[]): Group[] {
   return groups.map((group) => ({
     ...group,
     lastDelta: undefined,

@@ -32,7 +32,7 @@ const initialGroups: GroupType[] = [
 ];
 
 export default function App() {
-  const [groups, setGroups] = useState<GroupType[] | null>(initialGroups);
+  const [groups, setGroups] = useState<GroupType[]>(initialGroups);
 
   const mainStyle: React.CSSProperties = {
     height: "100vh",
